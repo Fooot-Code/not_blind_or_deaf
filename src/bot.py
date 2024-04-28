@@ -12,7 +12,6 @@ from rlutilities.linear_algebra import vec3, norm, normalize, clip
 
 from get_to_air_point import GetToAirPoint
 from kickoff import Kickoff
-from wall_class import Wall
 
 HOVER_IDLE_HEIGHT = 2000
 HOVER_IDLE_Y = 1000

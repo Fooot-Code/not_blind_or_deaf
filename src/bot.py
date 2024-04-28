@@ -73,6 +73,7 @@ class MyBot(BaseAgent):
         go_to_balls_y = self.get_vec3_ball(ball_prediction)
         
         target = go_to_balls_y 
+        
 
         # Render target and ball prediction
         polyline = [ball_prediction.slices[i].physics.location for i in range(0, 100, 5)]

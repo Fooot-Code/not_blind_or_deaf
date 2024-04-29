@@ -94,6 +94,8 @@ class MyBot(BaseAgent):
         return self.controls
 
     def get_vec3_ball(self, ball_prediction, time_elapsed):
+        global list_of_ball_positions, starting_time
+        
         for step in ball_prediction.slices[:ball_prediction.num_slices]:
             pos = step.physics.location
             
@@ -108,8 +110,12 @@ class MyBot(BaseAgent):
                 # return movement_vector if distance_from_ball != abs(distance_from_ball) 
                 if (self.team == 0 and distance_from_ball != abs(distance_from_ball)) or \
                     (self.team != 0 and distance_from_ball != abs(distance_from_ball) and self.info.ball.position[1] >= 0):
+                    list_of_ball_positions = []
+                    starting_time = time.time()
                     return movement_vector
                 
                 elif (self.team == 0 and distance_from_ball == abs(distance_from_ball) and self.info.ball.position[1] <= 0) or \
                     (self.team != 0 and distance_from_ball == abs(distance_from_ball)):
+                    list_of_ball_positions = []
+                    starting_time = time.time()
                     return hover_vector

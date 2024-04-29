@@ -13,7 +13,10 @@ from rlutilities.linear_algebra import vec3, norm, normalize, clip
 from get_to_air_point import GetToAirPoint
 from kickoff import Kickoff
 import time
+from random import choice
 
+hover_x_values = [2048, -2048]
+HOVER_IDLE_X = choice(hover_x_values)
 HOVER_IDLE_HEIGHT = 2000
 HOVER_IDLE_Y = 1000
 HOVER_MAX_HEIGHT = 1800

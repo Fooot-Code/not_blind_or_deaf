@@ -101,14 +101,15 @@ class MyBot(BaseAgent):
         
         for step in ball_prediction.slices[:ball_prediction.num_slices]:
             pos = step.physics.location
+            movement_vector = vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
+            hover_vector = vec3(0, 0, self.hover_min_height)
             
             if len(list_of_ball_positions) <= 1 and time_elapsed >= CHECKING_TIME:
                 list_of_ball_positions.append(self.info.ball.position)
 
             elif len(list_of_ball_positions) >= 2: # realistically, this should never go over 2
                 distance_from_ball = dist(list_of_ball_positions[0], list_of_ball_positions[1])
-                movement_vector = vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
-                hover_vector = vec3(0, 0, self.hover_min_height)
+                
 
                 # return movement_vector if distance_from_ball != abs(distance_from_ball) 
                 if (self.team == 0 and distance_from_ball != abs(distance_from_ball)) or \
@@ -122,3 +123,5 @@ class MyBot(BaseAgent):
                     list_of_ball_positions = []
                     starting_time = time.time()
                     return hover_vector
+                
+            return hover_vector

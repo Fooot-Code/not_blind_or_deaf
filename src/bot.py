@@ -12,7 +12,7 @@ from rlutilities.linear_algebra import vec3, norm, normalize, clip
 
 from get_to_air_point import GetToAirPoint
 from kickoff import Kickoff
-from wall_class import Wall
+from random import randint
 
 HOVER_IDLE_HEIGHT = 2000
 HOVER_IDLE_Y = 1000
@@ -50,6 +50,7 @@ class MyBot(BaseAgent):
         self.kickoff = None
 
         self.sign = 2 * self.team - 1  # 1 if orange, else -1
+        self.xHoverPos = 3000 if randint(0, 1) == 0 else -3000
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState: 
         self.ball = packet.game_ball
@@ -83,23 +84,10 @@ class MyBot(BaseAgent):
         target = go_to_balls_y #vec3(0, HOVER_IDLE_Y, HOVER_IDLE_HEIGHT)
 
         # render target and ball prediction
-        polyline = [ball_prediction.slices[i].physics.location for i in range(0, 100, 5)]
-        self.renderer.draw_polyline_3d(polyline, self.renderer.yellow())
+        # polyline = [ball_prediction.slices[i].physics.location for i in range(0, 100, 5)]
+        # self.renderer.draw_polyline_3d(polyline, self.renderer.yellow() if not future_goal else self.renderer.cyan())
         self.renderer.draw_rect_3d(target, 10, 10, True, self.renderer.cyan())
         self.renderer.draw_line_3d(self.car.position, target, self.renderer.lime())
-        
-        
-        if self.team == 0 and self.info.ball.position[1] <= -3968: #blue
-            
-            self.is_seeking_our_goal = False
-        elif self.team == 1 and self.info.ball.position[1] >= 3968: #orange
-            self.is_seeking_our_goal = False
-            print('hey')
-        elif self.team == 1 and self.info.ball.position[1] <= -3968:
-            self.is_seeking_our_goal = True
-        elif self.team == 0 and self.info.ball.position[1] >= 3968:
-            self.is_seeking_our_goal = True
-        
 
         # update controls
         self.hover.target = target
@@ -112,26 +100,33 @@ class MyBot(BaseAgent):
         for step in ball_prediction.slices[:ball_prediction.num_slices]:
             pos = step.physics.location
 
-            if self.team == 0:
-                if pos.y < 0 and pos.z >= 400 and self.is_seeking_our_goal != True: # On our side and is able to hit
-                    return vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
-                else:
-                    return vec3(0, 0, self.hover_min_height)
-                
+            
+            if self.ball.latest_touch.team == self.team and self.info.ball.position[0] > 0 and self.xHoverPos == 3000:
+                return vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
+            elif self.ball.latest_touch.team == self.team and self.info.ball.position[0] < 0 and self.xHoverPos == -3000:
+                return vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
             else:
-                if pos.y > 0 and pos.z >= 400 and self.is_seeking_our_goal != True: # On our side and is able to hit
-                    return vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
-                else:
-                    return vec3(0, 0, self.hover_min_height)
+                return vec3(self.xHoverPos, 0, self.hover_min_height)
+
+            # if self.team == 0:
+            #     if (pos.y < 0 and pos.z >= 400) and (self.is_seeking_our_goal != True or dist(self.info.ball.position, self.car.position) < 400): # On our side and is able to hit
+            #         return vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
+            #     else:
+            #         return vec3(0, 0, self.hover_min_height)
                 
-    def hit_our_goal(self, pos):
-        if pos.x >= -893 and pos.x <= 893 and pos.y >= 5120 and pos.y <= 5120 + 880 and self.team == 0: # blue
-            print("hey")
-            return True
-        elif pos.x >= -893 and pos.x <= 893 and pos.y >= -5120 and pos.y <= -5120 - 880 and self.team == 1: # orange
-            print(2)
-            return True
-        else:
-            print(1)
-            return False
+            # else:
+            #     if pos.y > 0 and pos.z >= 400 and self.is_seeking_our_goal != True: # On our side and is able to hit
+            #         return vec3(pos.x, 0, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
+            #     else:
+            #         return vec3(0, 0, self.hover_min_height)
+                
+    def find_future_goal(self, ball_prediction):
+        
+        for step in ball_prediction.slices[:ball_prediction.num_slices]:
+            pos = step.physics.location
+            if sign(pos.y) == self.sign:
+                continue
+            if abs(pos.y) > HOVER_TARGET_Y and abs(pos.x) < HOVER_MAX_SIDE and pos.z < HOVER_MAX_HEIGHT:
+                return vec3(pos.x, pos.y, pos.z if pos.z > self.hover_min_height else self.hover_min_height)
+        return None
 
